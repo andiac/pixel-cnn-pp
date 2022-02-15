@@ -6,6 +6,7 @@ from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 import matplotlib
 import matplotlib.pyplot as plt
+from collections import OrderedDict
 
 from model import PixelCNN
 from utils import discretized_mix_logistic_prob
@@ -37,7 +38,15 @@ svhn_loader = data.DataLoader(svhn_val, batch_size=100, shuffle=False, num_worke
 model = PixelCNN(nr_resnet=5, nr_filters=160,
             input_channels=3, nr_logistic_mix=10).to(device)
 
-model.load_state_dict(torch.load(model_path), strict=False)
+# model.load_state_dict(torch.load(model_path), strict=False)
+
+state_dict = torch.load(model_path, map_location=device)
+new_state_dict = OrderedDict()
+for k, v in state_dict.items():
+    name = k[7:] # remove `module.`
+    new_state_dict[name] = v
+
+model.load_state_dict(new_state_dict)
 model.eval()
 
 with torch.no_grad():
@@ -63,3 +72,4 @@ with torch.no_grad():
     plt.hist(cifar_score.cpu().detach().numpy(), bins=200)
     plt.hist(svhn_score.cpu().detach().numpy(), bins=200)
     plt.savefig("hist.png")
+    print(f"bpd: {cifar_score.cpu().detach().numpy().mean()}")
