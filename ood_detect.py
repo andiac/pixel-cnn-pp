@@ -7,6 +7,7 @@ from tqdm import tqdm
 import matplotlib
 import matplotlib.pyplot as plt
 from collections import OrderedDict
+import numpy as np
 
 from model import PixelCNN
 from utils import discretized_mix_logistic_prob
@@ -15,7 +16,7 @@ rescaling     = lambda x : (x - .5) * 2.
 rescaling_inv = lambda x : .5 * x  + .5
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model_path  = './models/pcnn_lr.0.00040_nr-resnet5_nr-filters160_489.pth'
+model_path  = './models/pcnn_lr.0.00040_nr-resnet5_nr-filters160_889.pth'
 device = torch.device("cuda:0")
 
 transform = transforms.Compose([
@@ -72,4 +73,7 @@ with torch.no_grad():
     plt.hist(cifar_score.cpu().detach().numpy(), bins=200)
     plt.hist(svhn_score.cpu().detach().numpy(), bins=200)
     plt.savefig("hist.png")
-    print(f"bpd: {cifar_score.cpu().detach().numpy().mean()}")
+
+    mean_likelihood = cifar_score.cpu().detach().numpy().mean()
+    mean_bpd = -mean_likelihood * np.log2(np.e) / (32 * 32 * 3)
+    print(f"mean bpd: {mean_bpd}")

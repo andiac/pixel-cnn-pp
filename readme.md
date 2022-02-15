@@ -27,3 +27,13 @@ python main.py
 
 ### Contact
 This repository is no longer maintained. Feel free to file an issue if need be, however response may be slow. 
+
+### Out-of-distribution detection
+| Epoch | BPD    | AUROC  |
+|-------|--------|--------|
+| 319   | 2.9418 | 0.1493 |
+| 489   | 2.9409 | 0.1518 |
+| 589   | 2.9361 | 0.1535 |
+| 789   | 2.9295 | 0.1570 |
+| 889   | 2.9292 | 0.1558 |
+
