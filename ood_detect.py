@@ -1,3 +1,4 @@
+import argparse
 import torch
 import torchvision
 from torchvision import transforms
@@ -15,8 +16,14 @@ from utils import discretized_mix_logistic_prob
 rescaling     = lambda x : (x - .5) * 2.
 rescaling_inv = lambda x : .5 * x  + .5
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--model-path", type=str, default='./models/pcnn_lr.0.00040_nr-resnet5_nr-filters160_319.pth', help="pre-trained model path")
+args = parser.parse_args()
+print(args)
+
+model_path  = args.model_path
+
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model_path  = './models/pcnn_lr.0.00040_nr-resnet5_nr-filters160_889.pth'
 device = torch.device("cuda:0")
 
 transform = transforms.Compose([
@@ -75,5 +82,8 @@ with torch.no_grad():
     plt.savefig("hist.png")
 
     mean_likelihood = cifar_score.cpu().detach().numpy().mean()
+    mean_likelihood_svhn = svhn_score.cpu().detach().numpy().mean()
     mean_bpd = -mean_likelihood * np.log2(np.e) / (32 * 32 * 3)
+    mean_bpd_svhn = -mean_likelihood_svhn * np.log2(np.e) / (32 * 32 * 3)
     print(f"mean bpd: {mean_bpd}")
+    print(f"mean bpd on svhn: {mean_bpd_svhn}")
