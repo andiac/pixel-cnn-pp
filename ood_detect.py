@@ -4,6 +4,8 @@ from torchvision import transforms
 from torch.utils import data
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
+import matplotlib
+import matplotlib.pyplot as plt
 
 from model import PixelCNN
 from utils import discretized_mix_logistic_prob
@@ -12,7 +14,7 @@ rescaling     = lambda x : (x - .5) * 2.
 rescaling_inv = lambda x : .5 * x  + .5
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model_path  = './models/pcnn_lr.0.00040_nr-resnet5_nr-filters160_889.pth'
+model_path  = './models/pcnn_lr.0.00040_nr-resnet5_nr-filters160_489.pth'
 device = torch.device("cuda:0")
 
 transform = transforms.Compose([
@@ -57,3 +59,7 @@ with torch.no_grad():
     print(labels.shape)
     print(scores.shape)
     print(roc_auc_score(labels, scores))
+
+    plt.hist(cifar_score.cpu().detach().numpy(), bins=200)
+    plt.hist(svhn_score.cpu().detach().numpy(), bins=200)
+    plt.savefig("hist.png")
