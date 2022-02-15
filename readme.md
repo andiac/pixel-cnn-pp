@@ -29,11 +29,11 @@ python main.py
 This repository is no longer maintained. Feel free to file an issue if need be, however response may be slow. 
 
 ### Out-of-distribution detection
-| Epoch | BPD    | AUROC  |
-|-------|--------|--------|
-| 319   | 2.9418 | 0.1493 |
-| 489   | 2.9409 | 0.1518 |
-| 589   | 2.9361 | 0.1535 |
-| 789   | 2.9295 | 0.1570 |
-| 889   | 2.9292 | 0.1558 |
+| Epoch | BPD    | SVHN\_BPD | AUROC  |
+|-------|--------|----------|--------|
+| 319   | 2.9418 | 2.0881   | 0.1493 |
+| 489   | 2.9409 | 2.0940   | 0.1518 |
+| 589   | 2.9361 | 2.0942   | 0.1535 |
+| 789   | 2.9295 | 2.0969   | 0.1570 |
+| 889   | 2.9292 | 2.0912   | 0.1558 |
 
