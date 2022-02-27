@@ -147,7 +147,7 @@ for epoch in range(args.max_epochs):
         input_var = Variable(input)
         output = model(input_var)
         loss = loss_op(input_var, output)
-        test_loss += loss.data[0]
+        test_loss += loss.item()
         del loss, output
 
     deno = batch_idx * args.batch_size * np.prod(obs) * np.log(2.)
@@ -155,6 +155,9 @@ for epoch in range(args.max_epochs):
     print('test loss : %s' % (test_loss / deno))
     
     if (epoch + 1) % args.save_interval == 0: 
+        if not os.path.exists("./models"):
+            os.makedirs("./models")
+
         torch.save(model.state_dict(), 'models/{}_{}.pth'.format(model_name, epoch))
         print('sampling...')
         sample_t = sample(model)
