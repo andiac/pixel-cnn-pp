@@ -153,6 +153,7 @@ for epoch in range(args.max_epochs):
 
     deno = batch_idx * args.batch_size * np.prod(obs) * np.log(2.)
     writer.add_scalar('test/bpd', (test_loss / deno), writes)
+    writer.add_scalar('testBPDbyEpoch', (test_loss / deno), epoch)
     print('test loss : %s' % (test_loss / deno))
     
     if (epoch + 1) % args.save_interval == 0: 
