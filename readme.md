@@ -16,10 +16,21 @@ The code achieves **2.95** BPD on test set, compared to **2.92** BPD on the offi
 <img src="https://github.com/pclucas14/pixel-cnn-pp/blob/master/images/pcnn_lr:0.00020_nr-resnet5_nr-filters160_101.png">
 </p>
 
-### Running the code
+### Training the model
 ```
 python main.py
 ```
+
+### Training the model by blurred training set
+```
+python blur_train.py
+```
+
+### Explanation of the scirpts
+
+`ood_detect.py`: train on CIFAR10, test on CIFAR10 and SVHN. Plot the histgram and output mean BPDs.
+
+`blur_detect.py`: train on CIFAR10, test on CIFAR10 and blurred CIFAR10, the generated histogram shows that blurred CIFAR10 has higher dentisty then original CIFAR10.
 
 ### Differences with official implementation
 1. No data dependant weight initialization 
