@@ -31,16 +31,19 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     rescaling])
 
+blur_transform = transforms.Compose([transforms.GaussianBlur(7, sigma=(0.1, 2.0)), transforms.ToTensor(), rescaling])
+
+
 cifar_val = torchvision.datasets.CIFAR10('./Data',
                                           train=False, 
                                           download=True, 
-                                          transform=transform)
+                                          transform=blur_transform)
 cifar_loader = data.DataLoader(cifar_val, batch_size=100, shuffle=False, num_workers=1, pin_memory=True)
 
 svhn_val = torchvision.datasets.SVHN('./Data',
                                      split='test',
                                      download=True,
-                                     transform=transform)
+                                     transform=blur_transform)
 svhn_val.data = svhn_val.data[:10000]
 svhn_loader = data.DataLoader(svhn_val, batch_size=100, shuffle=False, num_workers=1, pin_memory=True)
 
