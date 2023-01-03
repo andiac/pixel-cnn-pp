@@ -99,14 +99,16 @@ scheduler = lr_scheduler.StepLR(optimizer, step_size=1, gamma=args.lr_decay)
 
 def sample(model):
     model.train(False)
-    data = torch.zeros(sample_batch_size, obs[0], obs[1], obs[2])
-    data = data.cuda()
-    for i in range(obs[1]):
-        for j in range(obs[2]):
-            data_v = Variable(data, volatile=True)
-            out   = model(data_v, sample=True)
-            out_sample = sample_op(out)
-            data[:, :, i, j] = out_sample.data[:, :, i, j]
+    with torch.no_grad():
+        data = torch.zeros(sample_batch_size, obs[0], obs[1], obs[2])
+        data = data.cuda()
+        for i in range(obs[1]):
+            for j in range(obs[2]):
+                # data_v = Variable(data, volatile=True)
+                data_v = data
+                out   = model(data_v, sample=True)
+                out_sample = sample_op(out)
+                data[:, :, i, j] = out_sample.data[:, :, i, j]
     return data
 
 print('starting training')
@@ -119,7 +121,7 @@ for epoch in range(args.max_epochs):
     model.train()
     for batch_idx, (input,_) in enumerate(train_loader):
         input = input.cuda()
-        input = Variable(input)
+        # input = Variable(input)
         output = model(input)
         loss = loss_op(input, output)
         optimizer.zero_grad()
@@ -142,14 +144,16 @@ for epoch in range(args.max_epochs):
     
     torch.cuda.synchronize()
     model.eval()
-    test_loss = 0.
-    for batch_idx, (input,_) in enumerate(test_loader):
-        input = input.cuda()
-        input_var = Variable(input)
-        output = model(input_var)
-        loss = loss_op(input_var, output)
-        test_loss += loss.item()
-        del loss, output
+    with torch.no_grad():
+        test_loss = 0.
+        for batch_idx, (input,_) in enumerate(test_loader):
+            input = input.cuda()
+            # input_var = Variable(input)
+            input_var = input
+            output = model(input_var)
+            loss = loss_op(input_var, output)
+            test_loss += loss.item()
+            # del loss, output
 
     deno = batch_idx * args.batch_size * np.prod(obs) * np.log(2.)
     writer.add_scalar('test/bpd', (test_loss / deno), writes)
