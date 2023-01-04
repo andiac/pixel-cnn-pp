@@ -218,6 +218,55 @@ def discretized_mix_logistic_loss_1d(x, l):
     return -torch.sum(log_sum_exp(log_probs))
 
 
+def discretized_mix_logistic_prob_1d(x, l):
+    """ log-likelihood for mixture of discretized logistics, assumes the data has been rescaled to [-1,1] interval """
+    # Pytorch ordering
+    x = x.permute(0, 2, 3, 1)
+    l = l.permute(0, 2, 3, 1)
+    xs = [int(y) for y in x.size()]
+    ls = [int(y) for y in l.size()]
+
+    # here and below: unpacking the params of the mixture of logistics
+    nr_mix = int(ls[-1] / 3)
+    logit_probs = l[:, :, :, :nr_mix]
+    l = l[:, :, :, nr_mix:].contiguous().view(xs + [nr_mix * 2]) # 2 for mean, scale
+    means = l[:, :, :, :, :nr_mix]
+    log_scales = torch.clamp(l[:, :, :, :, nr_mix:2 * nr_mix], min=-7.)
+    # here and below: getting the means and adjusting them based on preceding
+    # sub-pixels
+    x = x.contiguous()
+    x = x.unsqueeze(-1) + Variable(torch.zeros(xs + [nr_mix]).cuda(), requires_grad=False)
+
+    # means = torch.cat((means[:, :, :, 0, :].unsqueeze(3), m2, m3), dim=3)
+    centered_x = x - means
+    inv_stdv = torch.exp(-log_scales)
+    plus_in = inv_stdv * (centered_x + 1. / 255.)
+    # cdf_plus = F.sigmoid(plus_in)
+    cdf_plus = torch.sigmoid(plus_in)
+    min_in = inv_stdv * (centered_x - 1. / 255.)
+    # cdf_min = F.sigmoid(min_in)
+    cdf_min = torch.sigmoid(min_in)
+    # log probability for edge case of 0 (before scaling)
+    log_cdf_plus = plus_in - F.softplus(plus_in)
+    # log probability for edge case of 255 (before scaling)
+    log_one_minus_cdf_min = -F.softplus(min_in)
+    cdf_delta = cdf_plus - cdf_min  # probability for all other cases
+    mid_in = inv_stdv * centered_x
+    # log probability in the center of the bin, to be used in extreme cases
+    # (not actually used in our code)
+    log_pdf_mid = mid_in - log_scales - 2. * F.softplus(mid_in)
+    
+    inner_inner_cond = (cdf_delta > 1e-5).float()
+    inner_inner_out  = inner_inner_cond * torch.log(torch.clamp(cdf_delta, min=1e-12)) + (1. - inner_inner_cond) * (log_pdf_mid - np.log(127.5))
+    inner_cond       = (x > 0.999).float()
+    inner_out        = inner_cond * log_one_minus_cdf_min + (1. - inner_cond) * inner_inner_out
+    cond             = (x < -0.999).float()
+    log_probs        = cond * log_cdf_plus + (1. - cond) * inner_out
+    log_probs        = torch.sum(log_probs, dim=3) + log_prob_from_logits(logit_probs)
+    
+    return log_sum_exp(log_probs)
+
+
 def to_one_hot(tensor, n, fill_with=1.):
     # we perform one hot encore with respect to the last axis
     one_hot = torch.FloatTensor(tensor.size() + (n,)).zero_()
