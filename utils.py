@@ -34,13 +34,13 @@ def log_prob_from_logits(x):
 def gaussian_loss_1d(x, nn_out):
     # the output of nn is miu and log sigma for each pixel.
     # print(torch.exp(nn_out[:, 1, :, :]))
-    loglik = -(x - nn_out[:, 0, :, :]) * (x - nn_out[:, 0, :, :]) / (torch.exp(2 * nn_out[:, 1, :, :]) + 1e-5) - nn_out[:, 1, :, :]
+    loglik = -(x - nn_out[:, 0, :, :]) * (x - nn_out[:, 0, :, :]) / (torch.exp(2 * nn_out[:, 1, :, :]) + 1e-6) - nn_out[:, 1, :, :]
+
     return -torch.sum(loglik)
 
 
 def sample_from_gaussian_1d(nn_out):
-    print(nn_out.shape)
-    return torch.normal(nn_out[:, 0, :, :], torch.exp(nn_out[:, 1, :, :]))
+    return torch.normal(nn_out[:, 0, :, :], torch.exp(nn_out[:, 1, :, :]) + 1e-6).unsqueeze(1)
 
 
 def discretized_mix_logistic_loss(x, l):
