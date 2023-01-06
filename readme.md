@@ -48,3 +48,6 @@ This repository is no longer maintained. Feel free to file an issue if need be, 
 | 789   | 2.9295 | 2.0969   | 0.1570 |
 | 889   | 2.9292 | 2.0912   | 0.1558 |
 
+```
+python3 langevin_dynamics.py -c 3 -r 3 -n 0.001 -ss 1e-3
+```

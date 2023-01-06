@@ -4,6 +4,7 @@ import os
 import torch
 import argparse
 import torchvision
+from tqdm import tqdm
 from collections import OrderedDict
 
 from model import PixelCNN
@@ -11,10 +12,12 @@ from utils import discretized_mix_logistic_loss_1d, discretized_mix_logistic_los
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--noise', type=float,
+                        default=0.005, help='noise level of langevin dynamics')
     parser.add_argument('-s', '--steps', type=int,
-                        default=2048, help='number of steps of langevin dynamics')
-    parser.add_argument('-ss', '--step-size', type=int,
-                        default=10, help='Learning rate nu in langevin dynamics')
+                        default=4096, help='number of steps of langevin dynamics')
+    parser.add_argument('-ss', '--step-size', type=float,
+                        default=0.7, help='Learning rate nu in langevin dynamics')
     parser.add_argument('-d', '--dataset', type=str,
                         default='mnist', help='Can be either cifar|mnist')
     parser.add_argument("-r", "--row", type=int, default=10, help="number of rows in sampled image")
@@ -72,19 +75,21 @@ if __name__ == "__main__":
     imgs_per_step = []
 
     # Loop over K (steps)
-    for i in range(args.steps):
+    for i in tqdm(range(args.steps)):
         # Part 1: Add noise to the input.
-        noise.normal_(0, 0.005)
+        noise.normal_(0, args.noise)
         inp_imgs.data.add_(noise.data)
         inp_imgs.data.clamp_(min=-1.0, max=1.0)
 
         # Part 2: calculate gradients for the current input.
         out_imgs = model(inp_imgs)
-        loss = 3e-3 * (loss_op(inp_imgs, out_imgs))
+        # -E is the unnormalized prob...
+        # loss = 3e-3 * (loss_op(inp_imgs, out_imgs))
+        loss = (loss_op(inp_imgs, out_imgs))
         loss.backward()
         # inp_imgs.grad.mul_(0.0001)
-        inp_imgs.grad.data.clamp_(-0.03, 0.03) # For stabilizing and preventing too high gradients
-        print(inp_imgs.grad.data)
+        # inp_imgs.grad.data.clamp_(-0.03, 0.03) # For stabilizing and preventing too high gradients
+        # print(inp_imgs.grad.data)
 
         # Apply gradients to our current samples
         inp_imgs.data.add_(-args.step_size * inp_imgs.grad.data)
