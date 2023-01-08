@@ -34,7 +34,7 @@ parser.add_argument('-n', '--nr_filters', type=int, default=160,
 parser.add_argument('-m', '--nr_logistic_mix', type=int, default=10,
                     help='Number of logistic components in the mixture. Higher = more flexible model')
 parser.add_argument('-l', '--lr', type=float,
-                    default=0.0004, help='Base learning rate')
+                    default=0.0001, help='Base learning rate')
 parser.add_argument('-e', '--lr_decay', type=float, default=0.999995,
                     help='Learning rate decay, applied every step of the optimization')
 parser.add_argument('-b', '--batch_size', type=int, default=64,
