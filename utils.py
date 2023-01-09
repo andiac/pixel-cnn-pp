@@ -34,7 +34,7 @@ def log_prob_from_logits(x):
 def gaussian_loss_1d(x, nn_out):
     # the output of nn is miu and log sigma for each pixel.
     # print(torch.exp(nn_out[:, 1, :, :]))
-    loglik = -(x - nn_out[:, 0, :, :]) * (x - nn_out[:, 0, :, :]) / (torch.exp(2 * nn_out[:, 1, :, :])) - nn_out[:, 1, :, :]
+    loglik = -(x - nn_out[:, 0, :, :]) * (x - nn_out[:, 0, :, :]) / (2 * (torch.exp(2 * nn_out[:, 1, :, :]))) - nn_out[:, 1, :, :]
 
     return -torch.sum(loglik)
 
