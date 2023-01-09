@@ -56,11 +56,12 @@ writer = SummaryWriter(log_dir=os.path.join('runs', model_name))
 sample_batch_size = 25
 obs = (1, 28, 28) if 'mnist' in args.dataset else (3, 32, 32)
 input_channels = obs[0]
+quantize      = lambda x : ((x * 255.) + torch.rand_like(x)) / 256.
 rescaling     = lambda x : (x - .5) * 2.
 rescaling_inv = lambda x : .5 * x  + .5
 kwargs = {'num_workers':1, 'pin_memory':True, 'drop_last':True}
 # ds_transforms = transforms.Compose([transforms.ToTensor(), transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), rescaling])
-ds_transforms = transforms.Compose([transforms.ToTensor(), rescaling])
+ds_transforms = transforms.Compose([transforms.ToTensor(), quantize, rescaling])
 
 if 'mnist' in args.dataset : 
     train_loader = torch.utils.data.DataLoader(datasets.MNIST(args.data_dir, download=True, 
