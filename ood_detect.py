@@ -19,6 +19,8 @@ rescaling_inv = lambda x : .5 * x  + .5
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--model-path", type=str, default='./models/pcnn_lr.0.00040_nr-resnet5_nr-filters160_889.pth', help="pre-trained model path")
 parser.add_argument("-p", "--pre-trained", default=False, action='store_true')
+parser.add_argument('-d', '--dataset', type=str,
+                    default='cifar', help='Can be either cifar|fashion')
 args = parser.parse_args()
 print(args)
 
@@ -31,21 +33,41 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     rescaling])
 
-cifar_val = torchvision.datasets.CIFAR10('./data',
-                                          train=False, 
-                                          download=True, 
-                                          transform=transform)
-cifar_loader = data.DataLoader(cifar_val, batch_size=100, shuffle=False, num_workers=1, pin_memory=True)
+if "cifar" in args.dataset:
+    cifar_val = torchvision.datasets.CIFAR10('./data',
+                                              train=False, 
+                                              download=True, 
+                                              transform=transform)
+    cifar_loader = data.DataLoader(cifar_val, batch_size=100, shuffle=False, num_workers=1, pin_memory=True)
 
-svhn_val = torchvision.datasets.SVHN('./data',
-                                     split='test',
-                                     download=True,
-                                     transform=transform)
-svhn_val.data = svhn_val.data[:10000]
-svhn_loader = data.DataLoader(svhn_val, batch_size=100, shuffle=False, num_workers=1, pin_memory=True)
+    svhn_val = torchvision.datasets.SVHN('./data',
+                                         split='test',
+                                         download=True,
+                                         transform=transform)
+    svhn_val.data = svhn_val.data[:10000]
+    svhn_loader = data.DataLoader(svhn_val, batch_size=100, shuffle=False, num_workers=1, pin_memory=True)
 
-model = PixelCNN(nr_resnet=5, nr_filters=160,
-            input_channels=3, nr_logistic_mix=10).to(device)
+    model = PixelCNN(nr_resnet=5, nr_filters=160,
+                input_channels=3, nr_logistic_mix=10).to(device)
+
+if "fashion" in args.dataset:
+    cifar_val = torchvision.datasets.FashionMNIST('./data',
+                                              train=False, 
+                                              download=True, 
+                                              transform=transform)
+    cifar_loader = data.DataLoader(cifar_val, batch_size=100, shuffle=False, num_workers=1, pin_memory=True)
+
+    svhn_val = torchvision.datasets.MNIST('./data',
+                                         split='test',
+                                         download=True,
+                                         transform=transform)
+    svhn_val.data = svhn_val.data[:10000]
+    svhn_loader = data.DataLoader(svhn_val, batch_size=100, shuffle=False, num_workers=1, pin_memory=True)
+
+    # TODO...
+    model = PixelCNN(nr_resnet=5, nr_filters=160,
+                input_channels=3, nr_logistic_mix=10).to(device)
+
 
 # model.load_state_dict(torch.load(model_path), strict=False)
 
