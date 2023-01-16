@@ -17,7 +17,7 @@ rescaling     = lambda x : (x - .5) * 2.
 rescaling_inv = lambda x : .5 * x  + .5
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--model-path", type=str, default='./models/pcnn_lr.0.00040_nr-resnet5_nr-filters160_319.pth', help="pre-trained model path")
+parser.add_argument("-m", "--model-path", type=str, default='./models/pcnn_lr.0.00040_nr-resnet5_nr-filters160_889.pth', help="pre-trained model path")
 parser.add_argument("-p", "--pre-trained", default=False, action='store_true')
 args = parser.parse_args()
 print(args)
@@ -31,13 +31,13 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     rescaling])
 
-cifar_val = torchvision.datasets.CIFAR10('./Data',
+cifar_val = torchvision.datasets.CIFAR10('./data',
                                           train=False, 
                                           download=True, 
                                           transform=transform)
 cifar_loader = data.DataLoader(cifar_val, batch_size=100, shuffle=False, num_workers=1, pin_memory=True)
 
-svhn_val = torchvision.datasets.SVHN('./Data',
+svhn_val = torchvision.datasets.SVHN('./data',
                                      split='test',
                                      download=True,
                                      transform=transform)
@@ -92,3 +92,21 @@ with torch.no_grad():
     mean_bpd_svhn = -mean_likelihood_svhn * np.log2(np.e) / (32 * 32 * 3)
     print(f"mean bpd: {mean_bpd}")
     print(f"mean bpd on svhn: {mean_bpd_svhn}")
+
+    cifar_score_np = cifar_score.cpu().detach().numpy()  * np.log2(np.e) / (32 * 32 * 3)
+    svhn_score_np  = svhn_score.cpu().detach().numpy() * np.log2(np.e) / (32 * 32 * 3)
+    hist_range_min = np.concatenate((cifar_score_np, svhn_score_np)).min()
+    hist_range_max = np.concatenate((cifar_score_np, svhn_score_np)).max()
+    cifary, cifarx = np.histogram(cifar_score_np, bins=22, range=(hist_range_min, hist_range_max))
+    svhny, svhnx   = np.histogram(svhn_score_np, bins=22, range=(hist_range_min, hist_range_max))
+    print("cifar hist:")
+    for y, x in zip(cifary, cifarx):
+        print(f"({x}, {y})")
+    print(f"({cifarx[-1]}, 0)")
+
+    print("svhn hist:")
+    for y, x in zip(svhny, svhnx):
+        print(f"({x}, {y})")
+    print(f"({svhnx[-1]}, 0)")
+
+
