@@ -10,6 +10,7 @@ from torchvision import datasets, transforms, utils
 from tensorboardX import SummaryWriter
 from utils import * 
 from model import * 
+from tps_warp import TPSWarp
 from PIL import Image
 
 parser = argparse.ArgumentParser()
@@ -18,6 +19,8 @@ parser.add_argument('-i', '--data_dir', type=str,
                     default='data', help='Location for the dataset')
 parser.add_argument('-o', '--save_dir', type=str, default='models',
                     help='Location for parameter checkpoints and samples')
+parser.add_argument('-a', '--augment', action='store_true', default=False,
+                    help='augment data')
 parser.add_argument('-d', '--dataset', type=str,
                     default='cifar', help='Can be either cifar|mnist|fashion')
 parser.add_argument('-p', '--print_every', type=int, default=50,
@@ -49,7 +52,7 @@ args = parser.parse_args()
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 
-model_name = 'pcnn_lr:{:.5f}_nr-resnet{}_nr-filters{}'.format(args.lr, args.nr_resnet, args.nr_filters)
+model_name = 'pcnn_lr:{:.5f}_nr-resnet{}_nr-filters{}_{}'.format(args.lr, args.nr_resnet, args.nr_filters, "aug" if args.augment else "no-aug")
 assert not os.path.exists(os.path.join('runs', model_name)), '{} already exists!'.format(model_name)
 writer = SummaryWriter(log_dir=os.path.join('runs', model_name))
 
@@ -60,7 +63,11 @@ rescaling     = lambda x : (x - .5) * 2.
 rescaling_inv = lambda x : .5 * x  + .5
 kwargs = {'num_workers':1, 'pin_memory':True, 'drop_last':True}
 # ds_transforms = transforms.Compose([transforms.ToTensor(), transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), rescaling])
-ds_transforms = transforms.Compose([transforms.ToTensor(), rescaling])
+if args.augment:
+    ds_transforms = transforms.Compose([TPSWarp(5, 0.05), transforms.ToTensor(), rescaling])
+else:
+    ds_transforms = transforms.Compose([transforms.ToTensor(), rescaling])
+test_transforms = transforms.Compose([transforms.ToTensor(), rescaling])
 
 if 'mnist' in args.dataset : 
     train_loader = torch.utils.data.DataLoader(datasets.MNIST(args.data_dir, download=True, 
@@ -68,7 +75,7 @@ if 'mnist' in args.dataset :
                             shuffle=True, **kwargs)
     
     test_loader  = torch.utils.data.DataLoader(datasets.MNIST(args.data_dir, train=False, 
-                    transform=ds_transforms), batch_size=args.batch_size, shuffle=True, **kwargs)
+                    transform=test_transforms), batch_size=args.batch_size, shuffle=True, **kwargs)
     
     loss_op   = lambda real, fake : discretized_mix_logistic_loss_1d(real, fake)
     sample_op = lambda x : sample_from_discretized_mix_logistic_1d(x, args.nr_logistic_mix)
@@ -79,7 +86,7 @@ elif 'fashion' in args.dataset :
                             shuffle=True, **kwargs)
     
     test_loader  = torch.utils.data.DataLoader(datasets.FashionMNIST(args.data_dir, train=False, 
-                    transform=ds_transforms), batch_size=args.batch_size, shuffle=True, **kwargs)
+                    transform=test_transforms), batch_size=args.batch_size, shuffle=True, **kwargs)
     
     loss_op   = lambda real, fake : discretized_mix_logistic_loss_1d(real, fake)
     sample_op = lambda x : sample_from_discretized_mix_logistic_1d(x, args.nr_logistic_mix)
@@ -90,7 +97,7 @@ elif 'cifar' in args.dataset :
         download=True, transform=ds_transforms), batch_size=args.batch_size, shuffle=True, **kwargs)
     
     test_loader  = torch.utils.data.DataLoader(datasets.CIFAR10(args.data_dir, train=False, 
-                    transform=ds_transforms), batch_size=args.batch_size, shuffle=True, **kwargs)
+                    transform=test_transforms), batch_size=args.batch_size, shuffle=True, **kwargs)
     
     loss_op   = lambda real, fake : discretized_mix_logistic_loss(real, fake)
     sample_op = lambda x : sample_from_discretized_mix_logistic(x, args.nr_logistic_mix)
